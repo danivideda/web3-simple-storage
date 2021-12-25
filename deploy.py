@@ -38,10 +38,10 @@ bytecode = compiled_sol["contracts"]["SimpleStorage.sol"]["SimpleStorage"]["evm"
 abi = compiled_sol["contracts"]["SimpleStorage.sol"]["SimpleStorage"]["abi"]
 
 # Connecting to Ganache (local blockchain)
-w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:7545"))
-chain_id = 1337
-my_address = "0xF9D91d066F4440ed25fe6511e2f51867b3a05184"
-private_key = os.getenv("PRIVATE_KEY")
+w3 = Web3(Web3.HTTPProvider(os.getenv("WEB3_INFURA_PROJECT_ID")))
+chain_id = 4
+my_address = "0xEddC298665C5D881750E17F01B0F27224a774b6b"
+private_key = os.getenv("PRIVATE_KEY_RINKEBY")
 
 # Create contract in python
 SimpleStorage = w3.eth.contract(abi=abi, bytecode=bytecode)
