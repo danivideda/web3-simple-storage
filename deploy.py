@@ -16,11 +16,7 @@ compiled_sol = compile_standard(
     {
         "language": "Solidity",
         "sources": {"SimpleStorage.sol": {"content": simple_storage_file}},
-        "settings": {
-            "outputSelection": {
-                "*": {"*": ["abi", "metadata", "evm.bytecode", "evm.sourceMap"]}
-            }
-        },
+        "settings": {"outputSelection": {"*": {"*": ["abi", "metadata", "evm.bytecode", "evm.sourceMap"]}}},
     },
     solc_version="0.8.0",
 )
@@ -30,9 +26,7 @@ with open("compiled_code.json", "w") as file:
     json.dump(compiled_sol, file)
 
 # Get bytecode
-bytecode = compiled_sol["contracts"]["SimpleStorage.sol"]["SimpleStorage"]["evm"][
-    "bytecode"
-]["object"]
+bytecode = compiled_sol["contracts"]["SimpleStorage.sol"]["SimpleStorage"]["evm"]["bytecode"]["object"]
 
 # Get ABI
 abi = compiled_sol["contracts"]["SimpleStorage.sol"]["SimpleStorage"]["abi"]
@@ -43,18 +37,19 @@ chain_id = 1337
 my_address = "0xF9D91d066F4440ed25fe6511e2f51867b3a05184"
 private_key = os.getenv("PRIVATE_KEY")
 
-# Create contract in python
-SimpleStorage = w3.eth.contract(abi=abi, bytecode=bytecode)
-# Get latest transaction for nonce value
-nonce = w3.eth.getTransactionCount(my_address)
+# Working with NEWLY CREATED contract, you need:
+# 1. Contract bytecode
+# 2. Contract ABI
+SimpleStorage = w3.eth.contract(bytecode=bytecode, abi=abi)  # Create contract in python
+nonce = w3.eth.getTransactionCount(my_address)  # Get latest transaction for nonce value later
 
 # ----------------------
 # 1. Build a transaction
 # 2. Sign a transaction
 # 3. Send a transaction
 # ----------------------
-# build transaction
-transaction = SimpleStorage.constructor().buildTransaction(
+
+transaction = SimpleStorage.constructor().buildTransaction(  # build transaction
     {
         "gasPrice": w3.eth.gas_price,
         "chainId": chain_id,
@@ -62,25 +57,33 @@ transaction = SimpleStorage.constructor().buildTransaction(
         "nonce": nonce,
     }
 )
-# sign transaction
-signed_txn = w3.eth.account.sign_transaction(transaction, private_key=private_key)
-# send this signed transaction
+
+signed_txn = w3.eth.account.sign_transaction(transaction, private_key=private_key)  # sign transaction
 print("Deploying contract...")
-tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-# just for awaiting block confirmation, a good practice before executing next code
-tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)  # send this signed transaction
+tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)  # awaiting block confirmation
 print("Deployed!")
 
-# Working with the contract, you need:
+# Working with ALREADY DEPLOYED contract, you need:
 # Contract address
 # Contract ABI
 simple_storage = w3.eth.contract(address=tx_receipt.contractAddress, abi=abi)
+
+# Notes: -----------------------------------------------
 # Call -> getting information without changing the state
 # Transact -> actually make state change
+# ------------------------------------------------------
+print(
+    simple_storage.functions.retrieve().call()
+)  # This is a call function, so it doesn't need to be a signed-transaction
 
-# Initial value
-print(simple_storage.functions.retrieve().call())
-store_transaction = simple_storage.functions.store(15).buildTransaction(
+# ----------------------
+# 1. Build a transaction
+# 2. Sign a transaction
+# 3. Send a transaction
+# ----------------------
+
+store_transaction = simple_storage.functions.store(15).buildTransaction(  # build transaction
     {
         "gasPrice": w3.eth.gas_price,
         "chainId": chain_id,
@@ -88,12 +91,10 @@ store_transaction = simple_storage.functions.store(15).buildTransaction(
         "nonce": nonce + 1,
     }
 )
-signed_store_txn = w3.eth.account.sign_transaction(
-    store_transaction, private_key=private_key
-)
+signed_store_txn = w3.eth.account.sign_transaction(store_transaction, private_key=private_key)  # sign this transaction
 print("Updating contract...")
-tx_hash = w3.eth.send_raw_transaction(signed_store_txn.rawTransaction)
-tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+tx_hash = w3.eth.send_raw_transaction(signed_store_txn.rawTransaction)  # send this transaction
+tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)  # wait for block confirmation
 print("Updated!")
 
 print(simple_storage.functions.retrieve().call())
