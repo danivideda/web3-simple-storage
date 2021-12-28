@@ -37,7 +37,7 @@ bytecode = compiled_sol["contracts"]["SimpleStorage.sol"]["SimpleStorage"]["evm"
 # Get ABI
 abi = compiled_sol["contracts"]["SimpleStorage.sol"]["SimpleStorage"]["abi"]
 
-# Connecting to Ganache (local blockchain)
+# Connecting to Rinkeby (Testnet global)
 w3 = Web3(Web3.HTTPProvider(os.getenv("WEB3_INFURA_PROJECT_ID")))
 chain_id = 4
 my_address = "0xEddC298665C5D881750E17F01B0F27224a774b6b"
